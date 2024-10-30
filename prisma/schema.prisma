@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model TrainingPlan {
+  id          Int        @id @default(autoincrement())
+  name        String
+  level       Difficulty
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  userId      Int
+  workouts    Workout[]  @relation("WorkoutInPlan")
+  isDeleted   Boolean    @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Workout {
+  id            Int                 @id @default(autoincrement())
+  name          String
+  description   String?
+  frequency     Int
+  duration      Int
+  level         Difficulty
+  category      Category
+  trainingType  String
+  userId        Int
+  exercises     ExerciseInWorkout[]
+  trainingPlans TrainingPlan[]      @relation("WorkoutInPlan")
+  isDeleted     Boolean             @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ExerciseInWorkout {
+  id         Int      @id @default(autoincrement())
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+  exerciseId Int
+  workout    Workout  @relation(fields: [workoutId], references: [id])
+  workoutId  Int
+  sets       Int
+  reps       Int
+  weight     Float?
+  restTime   Int
+  order      Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workoutId, order])
+}
+
+model Exercise {
+  id             Int                 @id @default(autoincrement())
+  mediaUrl       String
+  name           String              @unique
+  level          Difficulty
+  category       Category
+  equipment      String
+  description    String
+  muscleGroups   MuscleGroup[]       @relation("ExerciseMuscleGroups")
+  recommendation String?
+  workouts       ExerciseInWorkout[]
+  isDeleted      Boolean             @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MuscleGroup {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  description String?
+  isDeleted   Boolean    @default(false)
+  exercises   Exercise[] @relation("ExerciseMuscleGroups")
+}
+
+enum Difficulty {
+  BASIC
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum Category {
+  CARDIO
+  STRENGTH
+  FLEXIBILITY
+}
