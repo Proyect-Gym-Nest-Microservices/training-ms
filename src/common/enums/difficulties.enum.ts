@@ -1,4 +1,3 @@
-//import { Difficulty } from "@prisma/client";
 
 export enum Difficulty {
     BASIC = 'BASIC',

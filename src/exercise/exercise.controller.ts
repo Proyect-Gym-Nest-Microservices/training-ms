@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { ExerciseService } from './exercise.service';
 import { CreateExerciseDto } from './dto/create-exercise.dto';
@@ -9,37 +9,30 @@ import { PaginationDto } from 'src/common';
 export class ExerciseController {
   constructor(private readonly exerciseService: ExerciseService) {}
 
-  //@MessagePattern('create.exercise')
-  @Post('/create')
-  //create(@Payload() createExerciseDto: CreateExerciseDto) {
-  create(@Body() createExerciseDto: CreateExerciseDto) {
-    return this.exerciseService.create(createExerciseDto);
+  @MessagePattern('create.exercise')
+  createExercise(@Payload() createExerciseDto: CreateExerciseDto) {
+    return this.exerciseService.createExercise(createExerciseDto);
   }
 
-  @Get('/find-all')
-  //@MessagePattern('find.all.exercise')
-    //findAll(@Payload() paginationDto:PaginationDto) {
-  findAll(@Query() paginationDto:PaginationDto){
-    return this.exerciseService.findAll(paginationDto);
+  @MessagePattern('find.all.exercise')
+  findAllExercises(@Payload() paginationDto:PaginationDto) {
+    return this.exerciseService.findAllExercises(paginationDto);
   }
 
-  @Get('/find/:id')
-  //@MessagePattern('find.one.exercise')
-  //findById(@Payload() id: number) {
-  findById(@Param('id') id: number) {
-    return this.exerciseService.findById(id);
+  @MessagePattern('find.exercise.by.id')
+  findExerciseById(@Payload('id') id: number) {
+    return this.exerciseService.findExerciseById(id);
   }
 
-  @Patch('/update')
-  update(@Body() updateExerciseDto: UpdateExerciseDto) {
-    //@MessagePattern('update.exercise')
-  //update(@Payload() updateExerciseDto: UpdateExerciseDto) {
-    return this.exerciseService.update(updateExerciseDto);
+
+  @MessagePattern('update.one.exercise')
+  updateExercise(@Payload() payload: { id: number, updateExerciseDto: UpdateExerciseDto }) {
+    
+    return this.exerciseService.updateExercise(payload.id,payload.updateExerciseDto );
   }
 
-  @Delete('/delete/:id')
-  remove(@Param('id') id: number) {
-    //@MessagePattern('remove.exercise') //remove(@Payload() id: number) {
-    return this.exerciseService.remove(id);
+  @MessagePattern('remove.exercise') 
+  removeExercise(@Payload('id') id: number) {
+    return this.exerciseService.removeExercise(id);
   }
 }

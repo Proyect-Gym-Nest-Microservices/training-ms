@@ -37,7 +37,6 @@ model Workout {
   level         Difficulty
   category      Category
   trainingType  String
-  userId        Int
   exercises     ExerciseInWorkout[]
   trainingPlans TrainingPlan[]      @relation("WorkoutInPlan")
   isDeleted     Boolean             @default(false)

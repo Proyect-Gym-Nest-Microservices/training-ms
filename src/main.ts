@@ -5,14 +5,14 @@ import { envs } from './config';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  //const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
-  //  transport: Transport.NATS,
-  //  options: {
-  //    servers: envs.NATS_SERVERS
-  //  }
-  //});
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
+    transport: Transport.NATS,
+    options: {
+      servers: envs.NATS_SERVERS
+    }
+  });
 
-  const app = await NestFactory.create(AppModule)
+  //const app = await NestFactory.create(AppModule)
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -22,6 +22,6 @@ async function bootstrap() {
   )
 
 
-  await app.listen(3002);
+  await app.listen();
 }
 bootstrap();

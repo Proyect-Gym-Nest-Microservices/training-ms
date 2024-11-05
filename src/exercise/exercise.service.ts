@@ -15,7 +15,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
     this.logger.log('DataBase connected');
   }
 
-  async create(createExerciseDto: CreateExerciseDto) {
+  async createExercise(createExerciseDto: CreateExerciseDto) {
     try {
       const exercise = await this.exercise.findUnique({
         where: { name: createExerciseDto.name }
@@ -58,7 +58,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
 
   }
 
-  async findAll(paginationDto: PaginationDto) {
+  async findAllExercises(paginationDto: PaginationDto) {
     try {
       const { limit, page } = paginationDto
       const totalExercises = await this.exercise.count({
@@ -92,7 +92,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
 
   }
 
-  async findById(id: number) {
+  async findExerciseById(id: number) {
     try {
       const exercise = await this.exercise.findUnique({
         where: { id, isDeleted: false },
@@ -107,8 +107,8 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
         });
       }
       return exercise;
-
     } catch (error) {
+      console.log(error)
       if (error instanceof RpcException) {
         throw error;
       }
@@ -119,8 +119,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
     }
   }
 
-  async update(updateExerciseDto: UpdateExerciseDto) {
-    const { id, ...exercise } = updateExerciseDto;
+  async updateExercise(id:number, updateExerciseDto: UpdateExerciseDto) {
     try {
       const exercise = await this.exercise.findUnique({
         where: { id, isDeleted: false }
@@ -132,7 +131,6 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
         });
       }
       const { muscleGroupsIds,isDeleted, ...exerciseData } = updateExerciseDto;
-
       const updateExercise = await this.exercise.update({
         where: { id, isDeleted: false },
         data: {
@@ -148,7 +146,6 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
           muscleGroups: true
         }
       })
-
       return updateExercise
 
     } catch (error) {
@@ -162,7 +159,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
     }
   }
 
-  async remove(id: number) {
+  async removeExercise(id: number) {
     try {
       const exercise = await this.exercise.findUnique({
         where: { id, isDeleted:false }
