@@ -6,9 +6,6 @@ export class CreateExerciseInWorkoutDto{
     exerciseId: number;
 
     @IsInt()
-    workoutId: number;
-
-    @IsInt()
     sets: number;
 
     @IsInt()

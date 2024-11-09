@@ -12,7 +12,7 @@ CREATE TABLE "TrainingPlan" (
     "description" TEXT,
     "startDate" TIMESTAMP(3) NOT NULL,
     "endDate" TIMESTAMP(3),
-    "userId" INTEGER NOT NULL,
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -29,7 +29,7 @@ CREATE TABLE "Workout" (
     "level" "Difficulty" NOT NULL,
     "category" "Category" NOT NULL,
     "trainingType" TEXT NOT NULL,
-    "userId" INTEGER NOT NULL,
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -46,6 +46,7 @@ CREATE TABLE "ExerciseInWorkout" (
     "weight" DOUBLE PRECISION,
     "restTime" INTEGER NOT NULL,
     "order" INTEGER NOT NULL,
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -62,6 +63,7 @@ CREATE TABLE "Exercise" (
     "equipment" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "recommendation" TEXT,
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -73,6 +75,9 @@ CREATE TABLE "MuscleGroup" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "MuscleGroup_pkey" PRIMARY KEY ("id")
 );
@@ -90,13 +95,10 @@ CREATE TABLE "_ExerciseMuscleGroups" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "TrainingPlan_name_key" ON "TrainingPlan"("name");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "ExerciseInWorkout_workoutId_order_key" ON "ExerciseInWorkout"("workoutId", "order");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Exercise_name_key" ON "Exercise"("name");
-
--- CreateIndex
-CREATE UNIQUE INDEX "MuscleGroup_name_key" ON "MuscleGroup"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "_WorkoutInPlan_AB_unique" ON "_WorkoutInPlan"("A", "B");

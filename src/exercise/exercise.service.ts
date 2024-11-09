@@ -17,16 +17,10 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
 
   async createExercise(createExerciseDto: CreateExerciseDto) {
     try {
-      const exercise = await this.exercise.findUnique({
-        where: { name: createExerciseDto.name }
-      })
 
-      if (exercise) {
-        throw new RpcException({
-          status: HttpStatus.BAD_REQUEST,
-          message: 'Exercise with this name already exists'
-        });
-      }
+      await this.validateExerciseName(createExerciseDto.name)
+      await this.validateMuscleGroups(createExerciseDto.muscleGroupsIds)
+
       const newExercise = await this.exercise.create({
         data: {
           name: createExerciseDto.name,
@@ -41,10 +35,17 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
           }
         },
         include: {
-          muscleGroups: true
+          muscleGroups: {
+            select: {
+              id: true,
+              name: true,
+              description: true
+            }
+          }
         }
       })
-      return newExercise
+      const { createdAt, updatedAt, isDeleted, ...newExerciseData } = newExercise;
+      return { ...newExerciseData }
 
     } catch (error) {
       if (error instanceof RpcException) {
@@ -64,18 +65,27 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
       const totalExercises = await this.exercise.count({
         where: { isDeleted: false }
       })
-      console.log(totalExercises)
       const lastPage = Math.ceil(totalExercises / limit)
 
-      return {
-        data: await this.exercise.findMany({
-          where: { isDeleted: false },
-          skip: (page - 1) * limit,
-          take: limit,
-          include: {
-            muscleGroups:true
+      const exercises = await this.exercise.findMany({
+        where: { isDeleted: false },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          muscleGroups: {
+            select: {
+              id: true,
+              name: true,
+              description: true
+            }
           }
-        }),
+        }
+      })
+
+      return {
+        data: exercises.map(({ createdAt, updatedAt, isDeleted, ...exerciseData }) => ({
+          ...exerciseData
+        })),
         meta: {
           totalExercises,
           page,
@@ -97,7 +107,13 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
       const exercise = await this.exercise.findUnique({
         where: { id, isDeleted: false },
         include: {
-          muscleGroups: true
+          muscleGroups: {
+            select: {
+              id: true,
+              name: true,
+              description: true
+            }
+          }
         }
       });
       if (!exercise) {
@@ -106,9 +122,10 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
           message: `Exercise with ID ${id} not found`
         });
       }
-      return exercise;
+      const { createdAt, updatedAt, isDeleted, ...exerciseData } = exercise;
+      return { ...exerciseData };
     } catch (error) {
-      console.log(error)
+      this.logger.warn(error)
       if (error instanceof RpcException) {
         throw error;
       }
@@ -119,34 +136,41 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
     }
   }
 
-  async updateExercise(id:number, updateExerciseDto: UpdateExerciseDto) {
+  async updateExercise(id: number, updateExerciseDto: UpdateExerciseDto) {
     try {
-      const exercise = await this.exercise.findUnique({
-        where: { id, isDeleted: false }
-      });
-      if (!exercise) {
-        throw new RpcException({
-          status: HttpStatus.NOT_FOUND,
-          message: `Exercise with ID ${id} not found`
-        });
+      const { muscleGroupsIds, ...exerciseData } = updateExerciseDto;
+      const exercise = await this.findExerciseById(id)
+
+      if (updateExerciseDto.name != exercise.name) {
+        await this.validateExerciseName(updateExerciseDto.name)
       }
-      const { muscleGroupsIds,isDeleted, ...exerciseData } = updateExerciseDto;
+      if (muscleGroupsIds) {
+        await this.validateMuscleGroups(muscleGroupsIds)
+      }
+
       const updateExercise = await this.exercise.update({
         where: { id, isDeleted: false },
         data: {
           ...exerciseData,
           ...(muscleGroupsIds && {
             muscleGroups: {
-              set:muscleGroupsIds.map(id=>({id}))
+              set: muscleGroupsIds.map(id => ({ id }))
             }
           }),
-          updatedAt:new Date()
+          updatedAt: new Date()
         },
         include: {
-          muscleGroups: true
+          muscleGroups: {
+            select: {
+              id: true,
+              name: true,
+              description: true
+            }
+          }
         }
       })
-      return updateExercise
+      const { createdAt, updatedAt, isDeleted, ...updateExerciseData } = updateExercise
+      return { ...updateExerciseData }
 
     } catch (error) {
       if (error instanceof RpcException) {
@@ -161,26 +185,22 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
 
   async removeExercise(id: number) {
     try {
-      const exercise = await this.exercise.findUnique({
-        where: { id, isDeleted:false }
-      });
 
-      if (!exercise) {
-        throw new RpcException({
-          status: HttpStatus.NOT_FOUND,
-          message: `Exercise with ID ${id} not found`
-        });
-      }
+      await this.findExerciseById(id);
+      await this.checkExerciseDependencies(id)
+  
 
       const deletedExercise = await this.exercise.update({
         where: { id, isDeleted: false },
         data: {
           isDeleted: true,
-          updatedAt:new Date()
-        }
+          updatedAt: new Date()
+        },
       });
-
-      return deletedExercise;
+      return {
+        id: deletedExercise.id,
+        message: 'Exercise plan deleted successfully'
+      };
 
     } catch (error) {
       if (error instanceof RpcException) {
@@ -189,6 +209,50 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
       throw new RpcException({
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         message: 'Internal server error'
+      });
+    }
+  }
+  private async validateExerciseName(name: string): Promise<void> {
+    const exercise = await this.exercise.findFirst({
+      where: { name, isDeleted: false }
+    });
+
+    if (exercise) {
+      throw new RpcException({
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Exercise with this name already exists'
+      });
+    }
+  }
+  private async validateMuscleGroups(muscleGroupIds: number[]): Promise<void> {
+    const existingMucleGroups = await this.muscleGroup.findMany({
+      where: {
+        id: { in: muscleGroupIds },
+        isDeleted: false
+      }
+    })
+    if (existingMucleGroups.length !== muscleGroupIds.length) {
+      throw new RpcException({
+        status: HttpStatus.BAD_REQUEST,
+        message: 'One or more muscle group do not exist or are deleted'
+      });
+    }
+  }
+
+  private async checkExerciseDependencies(id: number): Promise<void> {
+
+    const workoutsCount = await this.exerciseInWorkout.count({
+      where: {
+        isDeleted: false,
+        exerciseId: id
+      }
+    });
+    console.log(workoutsCount)
+
+    if (workoutsCount > 0) {
+      throw new RpcException({
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Cannot delete exercise with associated workouts'
       });
     }
   }
