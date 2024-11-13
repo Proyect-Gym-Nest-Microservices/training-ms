@@ -174,11 +174,15 @@ export class TrainingPlanService extends PrismaClient implements OnModuleInit {
 
   async removeTrainingPlan(id: number) {
     try {
-      await this.findTrainingPlanById(id);
+      const plan = await this.findTrainingPlanById(id);
 
       const deletedPlan = await this.trainingPlan.update({
         where: { id },
-        data: {isDeleted: true,updatedAt: new Date()}
+        data: {
+          isDeleted: true,
+          updatedAt: new Date(),
+          name:`${plan.name}_deleted_${plan.id}`
+        }
       });
 
       return {

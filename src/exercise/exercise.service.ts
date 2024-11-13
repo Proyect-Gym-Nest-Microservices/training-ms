@@ -186,7 +186,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
   async removeExercise(id: number) {
     try {
 
-      await this.findExerciseById(id);
+      const exercise = await this.findExerciseById(id);
       await this.checkExerciseDependencies(id)
   
 
@@ -194,7 +194,8 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
         where: { id, isDeleted: false },
         data: {
           isDeleted: true,
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          name: `${exercise.name}_deleted_${id}`
         },
       });
       return {

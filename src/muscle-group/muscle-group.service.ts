@@ -150,12 +150,16 @@ export class MuscleGroupService extends PrismaClient implements OnModuleInit {
   async removeMuscleGroup(id: number) {
     try {
 
-      await this.findMuscleGroupById(id)
+      const muscle= await this.findMuscleGroupById(id)
       await this.checkMuscleGroupDependencies(id)
 
       const deletedMuscleGroup = await this.muscleGroup.update({
         where: { id },
-        data: { isDeleted: true, updatedAt:new Date() }
+        data: {
+          isDeleted: true,
+          updatedAt: new Date(),
+          name:`${muscle.name}_deleted_${muscle.id}`
+        }
       });
       
       return {

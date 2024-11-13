@@ -28,17 +28,17 @@ model TrainingPlan {
 }
 
 model Workout {
-  id            Int                 @id @default(autoincrement())
-  name          String
-  description   String?
-  frequency     Int
-  duration      Int
-  level         Difficulty
-  category      Category
-  trainingType  String
-  exercisesInWorkout     ExerciseInWorkout[]
-  trainingPlans TrainingPlan[]      @relation("WorkoutInPlan")
-  isDeleted     Boolean             @default(false)
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  description        String?
+  frequency          Int
+  duration           Int
+  level              Difficulty
+  category           Category
+  trainingType       String
+  exercisesInWorkout ExerciseInWorkout[]
+  trainingPlans      TrainingPlan[]      @relation("WorkoutInPlan")
+  isDeleted          Boolean             @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -75,6 +75,8 @@ model Exercise {
   recommendation String?
   workouts       ExerciseInWorkout[]
   isDeleted      Boolean             @default(false)
+  Equipment      Equipment?          @relation(fields: [equipmentId], references: [id])
+  equipmentId    Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -89,6 +91,38 @@ model MuscleGroup {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Equipment {
+  id          Int               @id @default(autoincrement())
+  name        String            @unique
+  description String?
+  category    EquipmentCategory
+  exercises   Exercise[]
+  isDeleted   Boolean           @default(false)
+  status      EquipmentStatus   @default(AVAILABLE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum EquipmentCategory {
+  MACHINE
+  FREE_WEIGHT
+  CARDIO
+  ACCESSORY
+  BODYWEIGHT
+}
+
+enum WeightUnit {
+  KG
+  LB
+}
+
+enum EquipmentStatus {
+  AVAILABLE
+  IN_MAINTENANCE
+  OUT_OF_ORDER
 }
 
 enum Difficulty {

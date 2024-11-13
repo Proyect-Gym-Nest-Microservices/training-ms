@@ -95,7 +95,7 @@ export class WorkoutService extends PrismaClient implements OnModuleInit {
             }
           }
         }
-      }) 
+      })
 
       return {
         data: workouts.map(({ createdAt, updatedAt, ...workoutData }) => ({
@@ -128,7 +128,7 @@ export class WorkoutService extends PrismaClient implements OnModuleInit {
           message: `exerciseInWorkout not found`
         });
       }
-      const {isDeleted,createdAt,updatedAt, ...exerciseData} = exerciseInWorkout
+      const { isDeleted, createdAt, updatedAt, ...exerciseData } = exerciseInWorkout
       return exerciseData;
     } catch (error) {
       if (error instanceof RpcException) {
@@ -183,7 +183,7 @@ export class WorkoutService extends PrismaClient implements OnModuleInit {
 
   async updateWorkout(id: number, updateWorkoutDto: UpdateWorkoutDto) {
     const { exercisesInWorkout, ...updateWorkoutDtoData } = updateWorkoutDto;
-    
+
     try {
       const workout = await this.findWorkoutById(id);
       if (updateWorkoutDto.name !== workout.name) {
@@ -197,7 +197,7 @@ export class WorkoutService extends PrismaClient implements OnModuleInit {
         where: { id, isDeleted: false },
         data: {
           ...updateWorkoutDtoData,
-          updatedAt:new Date(),
+          updatedAt: new Date(),
           exercisesInWorkout: exercisesInWorkout ? {
             deleteMany: {},
             create: exercisesInWorkout.map(exercise => ({
@@ -230,8 +230,8 @@ export class WorkoutService extends PrismaClient implements OnModuleInit {
           }
         }
       })
-      const {createdAt, updatedAt, ...updateWorkoutData }= updateWorkout
-      return {...updateWorkoutData}
+      const { createdAt, updatedAt, ...updateWorkoutData } = updateWorkout
+      return { ...updateWorkoutData }
     } catch (error) {
       if (error instanceof RpcException) {
         throw error;
@@ -245,20 +245,24 @@ export class WorkoutService extends PrismaClient implements OnModuleInit {
 
   async removeWorkout(id: number) {
     try {
-      await this.findWorkoutById(id);
+      const workout = await this.findWorkoutById(id);
       await this.checkWorkoutDependencies(id);
 
 
       return await this.$transaction(async (prisma) => {
 
         const deletedWorkout = await prisma.workout.update({
-          where: { id,isDeleted: false},
-          data: {isDeleted: true,updatedAt: new Date()}
+          where: { id, isDeleted: false },
+          data: {
+            isDeleted: true,
+            updatedAt: new Date(),
+            name: `${workout.name}_deleted_${workout.id}`
+          }
         });
 
         await prisma.exerciseInWorkout.updateMany({
           where: { workoutId: id },
-          data:{isDeleted:true,updatedAt: new Date()}
+          data: { isDeleted: true, updatedAt: new Date() }
         });
 
         return {
@@ -282,7 +286,7 @@ export class WorkoutService extends PrismaClient implements OnModuleInit {
 
   private async validateWorkoutName(name: string): Promise<void> {
     const workout = await this.workout.findFirst({
-      where: { name, isDeleted:false }
+      where: { name, isDeleted: false }
     });
 
     if (workout) {
@@ -324,7 +328,7 @@ export class WorkoutService extends PrismaClient implements OnModuleInit {
 
     const trainingPlans = await this.trainingPlan.count({
       where: {
-        isDeleted:false,
+        isDeleted: false,
         workouts: {
           some: {
             id
@@ -332,7 +336,7 @@ export class WorkoutService extends PrismaClient implements OnModuleInit {
         }
       }
     });
-  
+
     if (trainingPlans > 0) {
       throw new RpcException({
         status: HttpStatus.CONFLICT,
