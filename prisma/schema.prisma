@@ -69,14 +69,12 @@ model Exercise {
   name           String
   level          Difficulty
   category       Category
-  equipment      String
+  equipment      Equipment[]         @relation("EquipmentInExercise")
   description    String
   muscleGroups   MuscleGroup[]       @relation("ExerciseMuscleGroups")
   recommendation String?
   workouts       ExerciseInWorkout[]
   isDeleted      Boolean             @default(false)
-  Equipment      Equipment?          @relation(fields: [equipmentId], references: [id])
-  equipmentId    Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -98,7 +96,7 @@ model Equipment {
   name        String            @unique
   description String?
   category    EquipmentCategory
-  exercises   Exercise[]
+  exercise    Exercise[]        @relation("EquipmentInExercise")
   isDeleted   Boolean           @default(false)
   status      EquipmentStatus   @default(AVAILABLE)
 
@@ -112,11 +110,6 @@ enum EquipmentCategory {
   CARDIO
   ACCESSORY
   BODYWEIGHT
-}
-
-enum WeightUnit {
-  KG
-  LB
 }
 
 enum EquipmentStatus {
