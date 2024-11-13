@@ -20,6 +20,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
 
       await this.validateExerciseName(createExerciseDto.name)
       await this.validateMuscleGroups(createExerciseDto.muscleGroupsIds)
+      await this.validateEquipments(createExerciseDto.equipmentIds)
 
       const newExercise = await this.exercise.create({
         data: {
@@ -27,12 +28,15 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
           mediaUrl: createExerciseDto.mediaUrl,
           level: createExerciseDto.level,
           category: createExerciseDto.category,
-          equipment: createExerciseDto.equipment,
           description: createExerciseDto.description,
           recommendation: createExerciseDto.recommendation,
           muscleGroups: {
             connect: createExerciseDto.muscleGroupsIds.map(id => ({ id }))
+          },
+          equipments: {
+            connect: createExerciseDto.equipmentIds.map(id=>({id}))
           }
+          
         },
         include: {
           muscleGroups: {
@@ -40,6 +44,13 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
               id: true,
               name: true,
               description: true
+            }
+          },
+          equipments: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
             }
           }
         }
@@ -78,6 +89,13 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
               name: true,
               description: true
             }
+          },
+          equipments: {
+            select: {
+              id: true,
+              name: true,
+              description:true
+            }
           }
         }
       })
@@ -113,6 +131,13 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
               name: true,
               description: true
             }
+          },
+          equipments: {
+            select: {
+              id: true,
+              name: true,
+              description:true
+            }
           }
         }
       });
@@ -138,7 +163,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
 
   async updateExercise(id: number, updateExerciseDto: UpdateExerciseDto) {
     try {
-      const { muscleGroupsIds, ...exerciseData } = updateExerciseDto;
+      const { muscleGroupsIds, equipmentIds, ...exerciseData } = updateExerciseDto;
       const exercise = await this.findExerciseById(id)
 
       if (updateExerciseDto.name != exercise.name) {
@@ -146,6 +171,10 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
       }
       if (muscleGroupsIds) {
         await this.validateMuscleGroups(muscleGroupsIds)
+      }
+
+      if (equipmentIds) {
+        await this.validateEquipments(equipmentIds)
       }
 
       const updateExercise = await this.exercise.update({
@@ -157,6 +186,11 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
               set: muscleGroupsIds.map(id => ({ id }))
             }
           }),
+          ...(equipmentIds && {
+            equipments: {
+              set: equipmentIds.map(id=>({id}))
+            }
+          }),
           updatedAt: new Date()
         },
         include: {
@@ -165,6 +199,13 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
               id: true,
               name: true,
               description: true
+            }
+          },
+          equipments: {
+            select: {
+              id: true,
+              name: true,
+              description:true
             }
           }
         }
@@ -225,6 +266,8 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
       });
     }
   }
+
+
   private async validateMuscleGroups(muscleGroupIds: number[]): Promise<void> {
     const existingMucleGroups = await this.muscleGroup.findMany({
       where: {
@@ -239,21 +282,38 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
       });
     }
   }
+  private async validateEquipments(equipmentIds: number[]): Promise<void> {
+    
+    const existingEquipments = await this.equipment.findMany({
+      where: {
+        id: { in: equipmentIds },
+        isDeleted: false
+      }
+    })
+    if (existingEquipments.length !== equipmentIds.length) {
+      throw new RpcException({
+        status: HttpStatus.BAD_REQUEST,
+        message: 'One or more equipments do not exist or are deleted'
+      });
+    }
+  }
 
   private async checkExerciseDependencies(id: number): Promise<void> {
 
-    const workoutsCount = await this.exerciseInWorkout.count({
+    const workouts = await this.exerciseInWorkout.findMany({
       where: {
         isDeleted: false,
         exerciseId: id
+      },
+      select: {
+        id: true 
       }
     });
-    console.log(workoutsCount)
-
-    if (workoutsCount > 0) {
+  
+    if (workouts.length > 0) {
       throw new RpcException({
         status: HttpStatus.BAD_REQUEST,
-        message: 'Cannot delete exercise with associated workouts'
+        message: `Cannot delete exercise with associated workouts. Affected workouts: ${workouts.map(workout => workout.id).join(', ')}`
       });
     }
   }

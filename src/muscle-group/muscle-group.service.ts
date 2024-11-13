@@ -32,9 +32,12 @@ export class MuscleGroupService extends PrismaClient implements OnModuleInit {
     try {
       await this.validateMuscleGroupName(createMuscleGroupDto.name);
 
+
+
       const newMuscleGroup = await this.muscleGroup.create({
         data: {
           name: createMuscleGroupDto.name,
+          mediaUrl: createMuscleGroupDto.mediaUrl,
           description: createMuscleGroupDto.description,
         }
       });
@@ -133,7 +136,7 @@ export class MuscleGroupService extends PrismaClient implements OnModuleInit {
         data: updateMuscleGroupDto
       });
 
-      const { createdAt, updatedAt, ...muscleGroupData } = updatedMuscleGroup;
+      const { createdAt, updatedAt, isDeleted, ...muscleGroupData } = updatedMuscleGroup;
       return {...muscleGroupData};
 
     } catch (error) {
@@ -177,24 +180,25 @@ export class MuscleGroupService extends PrismaClient implements OnModuleInit {
       });
     }
   }
-
   private async checkMuscleGroupDependencies(id: number): Promise<void> {
-
-    const exercisesCount = await this.exercise.count({
+    const exercises = await this.exercise.findMany({
       where: {
-        isDeleted:false,
+        isDeleted: false,
         muscleGroups: {
           some: {
             id
           }
         }
+      },
+      select: {
+        id: true 
       }
     });
   
-    if (exercisesCount > 0) {
+    if (exercises.length > 0) {
       throw new RpcException({
         status: HttpStatus.CONFLICT,
-        message:'Cannot delete muscle group with associated exercises'
+        message: `Cannot delete muscle group with associated exercises. Affected exercises: ${exercises.map(exercise => exercise.id).join(', ')}`
       });
     }
   }

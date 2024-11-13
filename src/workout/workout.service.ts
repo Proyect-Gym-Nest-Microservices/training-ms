@@ -325,8 +325,7 @@ export class WorkoutService extends PrismaClient implements OnModuleInit {
   }
 
   private async checkWorkoutDependencies(id: number): Promise<void> {
-
-    const trainingPlans = await this.trainingPlan.count({
+    const trainingPlans = await this.trainingPlan.findMany({
       where: {
         isDeleted: false,
         workouts: {
@@ -334,13 +333,16 @@ export class WorkoutService extends PrismaClient implements OnModuleInit {
             id
           }
         }
+      },
+      select: {
+        id: true 
       }
     });
-
-    if (trainingPlans > 0) {
+  
+    if (trainingPlans.length > 0) {
       throw new RpcException({
         status: HttpStatus.CONFLICT,
-        message: 'Cannot delete workout with associated training plans'
+        message: `Cannot delete workout with associated training plans. Affected training plans: ${trainingPlans.map(plan => plan.id).join(', ')}`
       });
     }
   }

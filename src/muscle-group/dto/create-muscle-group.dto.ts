@@ -9,6 +9,10 @@ export class CreateMuscleGroupDto {
     @IsString()
     description?: string;
 
+    @IsString()
+    @IsNotEmpty()
+    mediaUrl: string;
+
     @IsOptional()
     @IsBoolean()
     isDeleted?: boolean;

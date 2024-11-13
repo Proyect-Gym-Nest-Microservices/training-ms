@@ -1,26 +1,211 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
+import { PrismaClient } from '@prisma/client';
+import { RpcException } from '@nestjs/microservices';
+import { PaginationDto } from 'src/common';
 
 @Injectable()
-export class EquipmentService {
-  create(createEquipmentDto: CreateEquipmentDto) {
-    return 'This action adds a new equipment';
+export class EquipmentService extends PrismaClient implements OnModuleInit {
+  
+  private readonly logger = new Logger('Equipment-Service');
+
+  async onModuleInit() {
+    await this.$connect();
+    this.logger.log('DataBase connected');
   }
 
-  findAll() {
-    return `This action returns all equipment`;
+  private async validateEquipmentName(name: string): Promise<void> {
+    const existingEquipment = await this.equipment.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' }, isDeleted: false }
+    });
+
+    if (existingEquipment) {
+      throw new RpcException({
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Equipment name already exists'
+      });
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} equipment`;
+  async createEquipment(createEquipmentDto: CreateEquipmentDto) {
+    try {
+      await this.validateEquipmentName(createEquipmentDto.name);
+
+      const newEquipment = await this.equipment.create({
+        data: {
+          name: createEquipmentDto.name,
+          mediaUrl: createEquipmentDto.mediaUrl,
+          description: createEquipmentDto.description,
+          category: createEquipmentDto.category,
+          status: createEquipmentDto.status,
+        }
+      });
+
+      const { createdAt, updatedAt, isDeleted, ...equipmentData } = newEquipment;
+      return { ...equipmentData };
+
+    } catch (error) {
+      if (error instanceof RpcException) {
+        throw error;
+      }
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error'
+      });
+    }
   }
 
-  update(id: number, updateEquipmentDto: UpdateEquipmentDto) {
-    return `This action updates a #${id} equipment`;
+  async findAllEquipment(paginationDto: PaginationDto) {
+    try {
+      const { limit, page } = paginationDto;
+      const totalEquipments = await this.equipment.count({
+        where: { isDeleted: false }
+      });
+      const lastPage = Math.ceil(totalEquipments / limit);
+
+      const equipment = await this.equipment.findMany({
+        where: { isDeleted: false },
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          mediaUrl: true,
+          description: true,
+          category: true,
+          status: true
+        }
+      });
+
+      return {
+        data: equipment,
+        meta: {
+          totalEquipments,
+          page,
+          lastPage
+        }
+      };
+
+    } catch (error) {
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error'
+      });
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} equipment`;
+  async findEquipmentById(id: number) {
+    try {
+      const equipment = await this.equipment.findUnique({
+        where: { id, isDeleted: false },
+        select: {
+          id: true,
+          name: true,
+          mediaUrl: true,
+          description: true,
+          category: true,
+          status: true
+        }
+      });
+
+      if (!equipment) {
+        throw new RpcException({
+          status: HttpStatus.NOT_FOUND,
+          message: 'Equipment not found'
+        });
+      }
+
+      return equipment;
+
+    } catch (error) {
+      if (error instanceof RpcException) {
+        throw error;
+      }
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  async updateEquipment(id: number, updateEquipmentDto: UpdateEquipmentDto) {
+    try {
+      const existingEquipment = await this.findEquipmentById(id);
+
+      if (updateEquipmentDto.name !== existingEquipment.name) {
+        await this.validateEquipmentName(updateEquipmentDto.name);
+      }
+
+      const updatedEquipment = await this.equipment.update({
+        where: { id },
+        data: updateEquipmentDto
+      });
+
+      const { createdAt, updatedAt, isDeleted, ...equipmentData } = updatedEquipment;
+      return { ...equipmentData };
+
+    } catch (error) {
+      if (error instanceof RpcException) {
+        throw error;
+      }
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  async removeEquipment(id: number) {
+    try {
+      const equipment = await this.findEquipmentById(id);
+      await this.checkEquipmentDependencies(id);
+
+      const deletedEquipment = await this.equipment.update({
+        where: { id },
+        data: {
+          isDeleted: true,
+          updatedAt: new Date(),
+          name: `${equipment.name}_deleted_${equipment.id}`
+        }
+      });
+      
+      return {
+        id: deletedEquipment.id,
+        message: 'Equipment deleted successfully'
+      };
+
+    } catch (error) {
+      if (error instanceof RpcException) {
+        throw error;
+      }
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  private async checkEquipmentDependencies(id: number): Promise<void> {
+    const exercises = await this.exercise.findMany({
+      where: {
+        isDeleted: false,
+        equipments: {
+          some: {
+            id
+          }
+        }
+      },
+      select: {
+        id: true 
+      }
+    });
+  
+    if (exercises.length > 0) {
+      throw new RpcException({
+        status: HttpStatus.CONFLICT,
+        message: `Cannot delete equipment with associated exercises. Affected exercises: ${exercises.map(exercise => exercise.id).join(', ')}`
+      });
+    }
   }
 }

@@ -69,7 +69,7 @@ model Exercise {
   name           String
   level          Difficulty
   category       Category
-  equipment      Equipment[]         @relation("EquipmentInExercise")
+  equipments     Equipment[]         @relation("EquipmentInExercise")
   description    String
   muscleGroups   MuscleGroup[]       @relation("ExerciseMuscleGroups")
   recommendation String?
@@ -84,6 +84,7 @@ model MuscleGroup {
   id          Int        @id @default(autoincrement())
   name        String
   description String?
+  mediaUrl    String
   isDeleted   Boolean    @default(false)
   exercises   Exercise[] @relation("ExerciseMuscleGroups")
 
@@ -94,6 +95,7 @@ model MuscleGroup {
 model Equipment {
   id          Int               @id @default(autoincrement())
   name        String            @unique
+  mediaUrl    String
   description String?
   category    EquipmentCategory
   exercise    Exercise[]        @relation("EquipmentInExercise")
