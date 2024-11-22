@@ -149,13 +149,24 @@ export class WorkoutService extends PrismaClient implements OnModuleInit {
           exercisesInWorkout: {
             select: {
               id: true,
-              exerciseId: true,
               workoutId: true,
               sets: true,
               reps: true,
               weight: true,
               restTime: true,
-              order: true
+              order: true,
+              exercise: {
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  equipments: true,
+                  level: true,
+                  mediaUrl: true,
+                  recommendation: true,
+                  muscleGroups:true
+                }
+              }
             }
           }
         }
