@@ -4,6 +4,7 @@ import { WorkoutService } from './workout.service';
 import { CreateWorkoutDto } from './dto/create-workout.dto';
 import { UpdateWorkoutDto } from './dto/update-workout.dto';
 import { PaginationDto } from 'src/common';
+import { FindWorkoutByIdsDto } from './dto/workout-by-ids.dto';
 
 @Controller()
 export class WorkoutController {
@@ -23,11 +24,16 @@ export class WorkoutController {
   findWorkoutById(@Payload('id',ParseIntPipe) id: number) {
     return this.workoutService.findWorkoutById(id);
   }
+  @MessagePattern('find.workout.by.ids')
+  findWorkoutByIds(@Payload() payload: FindWorkoutByIdsDto ) {
+    return this.workoutService.findWorkoutByIds(payload.ids);
+  }
 
   @MessagePattern('find.one.exercise.in.workout')
   findExerciseInWorkoutById(@Payload('id',ParseIntPipe) id: number) {
     return this.workoutService.findExerciseInWorkoutById(id);
   }
+
 
   @MessagePattern('update.workout')
   updateWorkout(@Payload() payload: { id: number, updateWorkoutDto: UpdateWorkoutDto }) {

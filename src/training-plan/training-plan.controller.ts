@@ -1,9 +1,10 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseArrayPipe, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { TrainingPlanService } from './training-plan.service';
 import { CreateTrainingPlanDto } from './dto/create-training-plan.dto';
 import { UpdateTrainingPlanDto } from './dto/update-training-plan.dto';
 import { PaginationDto } from 'src/common';
+import { FindTrainingPlanByIdsDto } from './dto/training-plan-by-ids.dto';
 
 @Controller()
 export class TrainingPlanController {
@@ -22,6 +23,10 @@ export class TrainingPlanController {
   @MessagePattern('find.training.plan.by.id')
   findTrainingPlanById(@Payload('id',ParseIntPipe) id: number) {
     return this.trainingPlanService.findTrainingPlanById(id);
+  }
+  @MessagePattern('find.training.plan.by.ids')
+  findTrainingPlanByIds(@Payload() payload:FindTrainingPlanByIdsDto) {
+    return this.trainingPlanService.findTrainingPlanByIds(payload.ids);
   }
 
   @MessagePattern('update.Training.plan')

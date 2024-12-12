@@ -209,6 +209,76 @@ export class WorkoutService extends PrismaClient implements OnModuleInit {
     }
   }
 
+  async findWorkoutByIds(ids: number[]) {
+    try {
+      const workouts = await this.workout.findMany({
+        where: {
+          id: { in: ids },
+          isDeleted: false,
+        },
+        include: {
+          exercisesInWorkout: {
+            select: {
+              id: true,
+              workoutId: true,
+              sets: true,
+              reps: true,
+              weight: true,
+              restTime: true,
+              order: true,
+              exercise: {
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  equipments: {
+                    select: {
+                      id: true,
+                      name: true,
+                      mediaUrl: true,
+                      description: true,
+                      category: true,
+                      status: true,
+                    },
+                  },
+                  level: true,
+                  mediaUrl: true,
+                  recommendation: true,
+                  muscleGroups: {
+                    select: {
+                      id: true,
+                      name: true,
+                      description: true,
+                      mediaUrl: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+  
+      if (!workouts || workouts.length === 0) {
+        throw new RpcException({
+          status: HttpStatus.NOT_FOUND,
+          message: 'Workouts not found',
+        });
+      }
+  
+      return workouts.map(({ createdAt, updatedAt, ...workoutData }) => workoutData);
+    } catch (error) {
+      if (error instanceof RpcException) {
+        throw error;
+      }
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error',
+      });
+    }
+  }
+  
+
   async updateWorkout(id: number, updateWorkoutDto: UpdateWorkoutDto) {
     const { exercisesInWorkout, ...updateWorkoutDtoData } = updateWorkoutDto;
 

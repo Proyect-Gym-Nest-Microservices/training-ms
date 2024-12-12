@@ -130,6 +130,44 @@ export class TrainingPlanService extends PrismaClient implements OnModuleInit {
     }
   }
 
+
+  async findTrainingPlanByIds(ids: number[]) {
+    try {
+      const trainingPlans = await this.trainingPlan.findMany({
+        where: {
+          id: { in: ids },
+          isDeleted: false,
+        },
+        include: {
+          workouts: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
+        },
+      });
+  
+      if (!trainingPlans || trainingPlans.length === 0) {
+        throw new RpcException({
+          status: HttpStatus.NOT_FOUND,
+          message: 'Training plans not found',
+        });
+      }
+  
+      return trainingPlans.map(({ createdAt, updatedAt, isDeleted, ...trainingPlanData }) => trainingPlanData);
+    } catch (error) {
+      if (error instanceof RpcException) {
+        throw error;
+      }
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error',
+      });
+    }
+  }
+
   async updateTrainingPlan(id: number, updateTrainingPlanDto: UpdateTrainingPlanDto) {
     const { workoutsIds, ...updateTrainingDtoData } = updateTrainingPlanDto
     try {
