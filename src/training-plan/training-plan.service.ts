@@ -148,14 +148,17 @@ export class TrainingPlanService extends PrismaClient implements OnModuleInit {
           },
         },
       });
-  
-      if (!trainingPlans || trainingPlans.length === 0) {
+
+      const existingIds = trainingPlans.map(plan => plan.id);
+      const missingIds = ids.filter(id => !existingIds.includes(id));
+
+      if (missingIds.length > 0) {
         throw new RpcException({
           status: HttpStatus.NOT_FOUND,
-          message: 'Training plans not found',
+          message: `Training plans not found for IDs: ${missingIds.join(', ')}`,
         });
       }
-  
+
       return trainingPlans.map(({ createdAt, updatedAt, isDeleted, ...trainingPlanData }) => trainingPlanData);
     } catch (error) {
       if (error instanceof RpcException) {
@@ -219,7 +222,7 @@ export class TrainingPlanService extends PrismaClient implements OnModuleInit {
         data: {
           isDeleted: true,
           updatedAt: new Date(),
-          name:`${plan.name}_deleted_${plan.id}`
+          name: `${plan.name}_deleted_${plan.id}`
         }
       });
 

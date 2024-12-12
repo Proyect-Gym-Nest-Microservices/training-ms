@@ -258,11 +258,14 @@ export class WorkoutService extends PrismaClient implements OnModuleInit {
           },
         },
       });
+
+      const existingIds = workouts.map(workout => workout.id);
+      const missingIds = ids.filter(id => !existingIds.includes(id));
   
-      if (!workouts || workouts.length === 0) {
+      if (missingIds.length > 0) {
         throw new RpcException({
           status: HttpStatus.NOT_FOUND,
-          message: 'Workouts not found',
+          message: `Workouts not found for IDs: ${missingIds.join(', ')}`,
         });
       }
   

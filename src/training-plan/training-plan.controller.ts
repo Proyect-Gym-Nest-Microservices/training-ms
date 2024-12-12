@@ -25,7 +25,8 @@ export class TrainingPlanController {
     return this.trainingPlanService.findTrainingPlanById(id);
   }
   @MessagePattern('find.training.plan.by.ids')
-  findTrainingPlanByIds(@Payload() payload:FindTrainingPlanByIdsDto) {
+  findTrainingPlanByIds(@Payload() payload: FindTrainingPlanByIdsDto) {
+    console.log(payload)
     return this.trainingPlanService.findTrainingPlanByIds(payload.ids);
   }
 
