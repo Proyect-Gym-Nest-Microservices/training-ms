@@ -14,14 +14,16 @@ datasource db {
 }
 
 model TrainingPlan {
-  id          Int        @id @default(autoincrement())
-  name        String     @unique
-  level       Difficulty
-  description String?
-  startDate   DateTime
-  endDate     DateTime?
-  workouts    Workout[]  @relation("WorkoutInPlan")
-  isDeleted   Boolean    @default(false)
+  id           Int        @id @default(autoincrement())
+  name         String     @unique
+  level        Difficulty
+  score        Float?     @default(0)
+  totalRatings Int?        @default(0)
+  description  String?
+  startDate    DateTime
+  endDate      DateTime?
+  workouts     Workout[]  @relation("WorkoutInPlan")
+  isDeleted    Boolean    @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -33,6 +35,8 @@ model Workout {
   description        String?
   frequency          Int
   duration           Int
+  score              Float?              @default(0)
+  totalRatings       Int?                 @default(0)
   level              Difficulty
   category           Category
   trainingType       String
@@ -67,6 +71,8 @@ model Exercise {
   id             Int                 @id @default(autoincrement())
   mediaUrl       String
   name           String
+  score          Float?              @default(0)
+  totalRatings   Int?                 @default(0)
   level          Difficulty
   category       Category
   equipments     Equipment[]         @relation("EquipmentInExercise")
@@ -93,14 +99,16 @@ model MuscleGroup {
 }
 
 model Equipment {
-  id          Int               @id @default(autoincrement())
-  name        String            @unique
-  mediaUrl    String
-  description String?
-  category    EquipmentCategory
-  exercise    Exercise[]        @relation("EquipmentInExercise")
-  isDeleted   Boolean           @default(false)
-  status      EquipmentStatus   @default(AVAILABLE)
+  id           Int               @id @default(autoincrement())
+  name         String            @unique
+  mediaUrl     String
+  description  String?
+  score        Float?            @default(0)
+  totalRatings Int?               @default(0)
+  category     EquipmentCategory
+  exercise     Exercise[]        @relation("EquipmentInExercise")
+  isDeleted    Boolean           @default(false)
+  status       EquipmentStatus   @default(AVAILABLE)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

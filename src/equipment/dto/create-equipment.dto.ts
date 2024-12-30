@@ -1,5 +1,5 @@
 import { EquipmentStatus, EquipmentStatusList } from "../enums/status.enum";
-import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
 import { EquipmentCategory, EquipmentCategoryList } from "../enums/categories.enum";
 
 export class CreateEquipmentDto {
@@ -14,6 +14,12 @@ export class CreateEquipmentDto {
     @IsString()
     @IsNotEmpty()
     description: string;
+
+    @IsNumber()
+    @Min(0, { message: 'Score must be at least 0' }) 
+    @Max(5, { message: 'Score cannot be greater than 5' })
+    @IsOptional()
+    score?: number;
 
     @IsEnum(EquipmentCategoryList, {
         message: `Possible category value are ${EquipmentCategoryList}`

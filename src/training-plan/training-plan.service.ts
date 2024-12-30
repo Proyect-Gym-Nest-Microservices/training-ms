@@ -4,6 +4,7 @@ import { UpdateTrainingPlanDto } from './dto/update-training-plan.dto';
 import { PrismaClient } from '@prisma/client';
 import { RpcException } from '@nestjs/microservices';
 import { PaginationDto } from 'src/common';
+import { RateDto } from 'src/common/dto/rate.dto';
 
 @Injectable()
 export class TrainingPlanService extends PrismaClient implements OnModuleInit {
@@ -167,6 +168,57 @@ export class TrainingPlanService extends PrismaClient implements OnModuleInit {
       throw new RpcException({
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         message: 'Internal server error',
+      });
+    }
+  }
+
+
+  async rateTrainingPlan(rateDto: RateDto) {
+    const { score, totalRatings, targetId:trainingId } = rateDto;
+
+    try {
+      if (score < 0 || score > 5) {
+        throw new RpcException({
+          status: HttpStatus.BAD_REQUEST,
+          message: 'Rating must be between 0 and 5'
+        });
+      }
+      if (totalRatings < 0) {
+        throw new RpcException({
+          status: HttpStatus.BAD_REQUEST,
+          message: 'Total ratings cannot be negative'
+        });
+      }
+
+      const trainingPlan = await this.trainingPlan.findUnique({
+        where: {id: trainingId,isDeleted: false},
+        select: {id: true,score: true,totalRatings: true}
+      });
+
+      if (!trainingPlan) {
+        throw new RpcException({
+          status: HttpStatus.NOT_FOUND,
+          message: 'Training Plan not found'
+        });
+      }
+
+
+      const updatedTrainingPlan = await this.trainingPlan.update({
+        where: { id: trainingId },
+        data: {score,totalRatings,updatedAt: new Date()
+        },
+        select: {id: true,name: true,score: true,totalRatings: true}
+      });
+
+      return updatedTrainingPlan;
+
+    } catch (error) {
+      if (error instanceof RpcException) {
+        throw error;
+      }
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error'
       });
     }
   }

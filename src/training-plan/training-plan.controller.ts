@@ -5,6 +5,7 @@ import { CreateTrainingPlanDto } from './dto/create-training-plan.dto';
 import { UpdateTrainingPlanDto } from './dto/update-training-plan.dto';
 import { PaginationDto } from 'src/common';
 import { FindTrainingPlanByIdsDto } from './dto/training-plan-by-ids.dto';
+import { RateDto } from 'src/common/dto/rate.dto';
 
 @Controller()
 export class TrainingPlanController {
@@ -16,12 +17,12 @@ export class TrainingPlanController {
   }
 
   @MessagePattern('find.all.training.plan')
-  findAllTrainingPlan(@Payload() paginationDto: PaginationDto){
+  findAllTrainingPlan(@Payload() paginationDto: PaginationDto) {
     return this.trainingPlanService.findAllTrainingPlan(paginationDto);
   }
 
   @MessagePattern('find.training.plan.by.id')
-  findTrainingPlanById(@Payload('id',ParseIntPipe) id: number) {
+  findTrainingPlanById(@Payload('id', ParseIntPipe) id: number) {
     return this.trainingPlanService.findTrainingPlanById(id);
   }
   @MessagePattern('find.training.plan.by.ids')
@@ -30,14 +31,20 @@ export class TrainingPlanController {
     return this.trainingPlanService.findTrainingPlanByIds(payload.ids);
   }
 
+  @MessagePattern('rate.training.plan')
+  rateWorkout(@Payload() rateDto: RateDto ) {
+    return this.trainingPlanService.rateTrainingPlan(rateDto);
+  }
+
+
   @MessagePattern('update.Training.plan')
-  updateTrainingPlan(@Payload() payload: {id:number, updateTrainingPlanDto: UpdateTrainingPlanDto }) {
-    const { id, updateTrainingPlanDto} = payload;
+  updateTrainingPlan(@Payload() payload: { id: number, updateTrainingPlanDto: UpdateTrainingPlanDto }) {
+    const { id, updateTrainingPlanDto } = payload;
     return this.trainingPlanService.updateTrainingPlan(id, updateTrainingPlanDto);
   }
 
   @MessagePattern('remove.training.plan')
-  removeTrainingPlan(@Payload('id',ParseIntPipe) id: number) {
+  removeTrainingPlan(@Payload('id', ParseIntPipe) id: number) {
     return this.trainingPlanService.removeTrainingPlan(id);
   }
 }

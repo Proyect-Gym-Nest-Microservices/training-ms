@@ -4,6 +4,7 @@ import { UpdateExerciseDto } from './dto/update-exercise.dto';
 import { PrismaClient } from '@prisma/client';
 import { RpcException } from '@nestjs/microservices';
 import { PaginationDto } from 'src/common';
+import { RateDto } from 'src/common/dto/rate.dto';
 
 @Injectable()
 export class ExerciseService extends PrismaClient implements OnModuleInit {
@@ -34,9 +35,9 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
             connect: createExerciseDto.muscleGroupsIds.map(id => ({ id }))
           },
           equipments: {
-            connect: createExerciseDto.equipmentIds.map(id=>({id}))
+            connect: createExerciseDto.equipmentIds.map(id => ({ id }))
           }
-          
+
         },
         include: {
           muscleGroups: {
@@ -94,7 +95,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
             select: {
               id: true,
               name: true,
-              description:true
+              description: true
             }
           }
         }
@@ -136,7 +137,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
             select: {
               id: true,
               name: true,
-              description:true
+              description: true
             }
           }
         }
@@ -160,6 +161,66 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
       });
     }
   }
+
+  async rateExercise(rateDto: RateDto) {
+    const { score, totalRatings, targetId:exerciseId } = rateDto;
+    try {
+      if (score < 0 || score > 5) {
+        throw new RpcException({
+          status: HttpStatus.BAD_REQUEST,
+          message: 'Rating must be between 0 and 5'
+        });
+      }
+
+      if (totalRatings < 0) {
+        throw new RpcException({
+          status: HttpStatus.BAD_REQUEST,
+          message: 'Total ratings cannot be negative'
+        });
+      }
+
+      const exercise = await this.exercise.findUnique({
+        where: { id: exerciseId, isDeleted: false },
+        select: { id: true, score: true, totalRatings: true }
+      });
+
+      if (!exercise) {
+        throw new RpcException({
+          status: HttpStatus.NOT_FOUND,
+          message: 'Exercise not found'
+        });
+      }
+
+
+      const updatedExercise = await this.exercise.update({
+        where: { id: exerciseId },
+        data: {
+          score,
+          totalRatings,
+          updatedAt: new Date()
+        },
+        select: {
+          id: true,
+          name: true,
+          score: true,
+          totalRatings: true,
+          updatedAt: true
+        }
+      });
+
+      return updatedExercise;
+
+    } catch (error) {
+      if (error instanceof RpcException) {
+        throw error;
+      }
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error'
+      });
+    }
+  }
+
 
   async updateExercise(id: number, updateExerciseDto: UpdateExerciseDto) {
     try {
@@ -188,7 +249,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
           }),
           ...(equipmentIds && {
             equipments: {
-              set: equipmentIds.map(id=>({id}))
+              set: equipmentIds.map(id => ({ id }))
             }
           }),
           updatedAt: new Date()
@@ -205,7 +266,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
             select: {
               id: true,
               name: true,
-              description:true
+              description: true
             }
           }
         }
@@ -229,7 +290,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
 
       const exercise = await this.findExerciseById(id);
       await this.checkExerciseDependencies(id)
-  
+
 
       const deletedExercise = await this.exercise.update({
         where: { id, isDeleted: false },
@@ -283,7 +344,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
     }
   }
   private async validateEquipments(equipmentIds: number[]): Promise<void> {
-    
+
     const existingEquipments = await this.equipment.findMany({
       where: {
         id: { in: equipmentIds },
@@ -306,10 +367,10 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
         exerciseId: id
       },
       select: {
-        id: true 
+        id: true
       }
     });
-  
+
     if (workouts.length > 0) {
       throw new RpcException({
         status: HttpStatus.BAD_REQUEST,

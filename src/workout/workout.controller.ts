@@ -5,6 +5,7 @@ import { CreateWorkoutDto } from './dto/create-workout.dto';
 import { UpdateWorkoutDto } from './dto/update-workout.dto';
 import { PaginationDto } from 'src/common';
 import { FindWorkoutByIdsDto } from './dto/workout-by-ids.dto';
+import { RateDto } from 'src/common/dto/rate.dto';
 
 @Controller()
 export class WorkoutController {
@@ -39,6 +40,11 @@ export class WorkoutController {
   updateWorkout(@Payload() payload: { id: number, updateWorkoutDto: UpdateWorkoutDto }) {
     const {id,updateWorkoutDto}=payload
     return this.workoutService.updateWorkout(id, updateWorkoutDto);
+  }
+  @MessagePattern('rate.workout')
+  rateWorkout(@Payload() rateDto: RateDto) {
+
+    return this.workoutService.rateWorkout(rateDto);
   }
 
   @MessagePattern('remove.workout')

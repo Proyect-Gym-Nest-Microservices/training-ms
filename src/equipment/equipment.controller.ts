@@ -4,11 +4,12 @@ import { EquipmentService } from './equipment.service';
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
 import { PaginationDto } from 'src/common';
+import { RateDto } from 'src/common/dto/rate.dto';
 
 
 @Controller()
 export class EquipmentController {
-  constructor(private readonly equipmentService: EquipmentService) {}
+  constructor(private readonly equipmentService: EquipmentService) { }
 
   @MessagePattern('create.equipment')
   createEquipment(@Payload() createEquipmentDto: CreateEquipmentDto) {
@@ -23,6 +24,11 @@ export class EquipmentController {
   @MessagePattern('find.one.equipment')
   findEquipmentById(@Payload('id', ParseIntPipe) id: number) {
     return this.equipmentService.findEquipmentById(id);
+  }
+
+  @MessagePattern('rate.equipment')
+  rateWorkout(@Payload() rateDto: RateDto ) {
+    return this.equipmentService.rateEquipment(rateDto);
   }
 
   @MessagePattern('update.equipment')

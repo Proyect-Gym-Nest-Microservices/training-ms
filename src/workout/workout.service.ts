@@ -5,6 +5,7 @@ import { UpdateWorkoutDto } from './dto/update-workout.dto';
 import { PrismaClient } from '@prisma/client';
 import { RpcException } from '@nestjs/microservices';
 import { PaginationDto } from 'src/common';
+import { RateDto } from 'src/common/dto/rate.dto';
 
 @Injectable()
 export class WorkoutService extends PrismaClient implements OnModuleInit {
@@ -277,6 +278,67 @@ export class WorkoutService extends PrismaClient implements OnModuleInit {
       throw new RpcException({
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         message: 'Internal server error',
+      });
+    }
+  }
+
+  async rateWorkout(rateDto: RateDto) {
+    const { score, totalRatings, targetId:workoutId } = rateDto;
+
+    try {
+      if (score < 0 || score > 5) {
+        throw new RpcException({
+          status: HttpStatus.BAD_REQUEST,
+          message: 'Rating must be between 0 and 5'
+        });
+      }
+
+      if (totalRatings < 0) {
+        throw new RpcException({
+          status: HttpStatus.BAD_REQUEST,
+          message: 'Total ratings cannot be negative'
+        });
+      }
+      console.log({workoutId})
+      const workout = await this.workout.findUnique({
+        where: { id: workoutId,isDeleted: false },
+        select: {id: true,score: true,totalRatings: true}
+      });
+  
+      if (!workout) {
+        throw new RpcException({
+          status: HttpStatus.NOT_FOUND,
+          message: 'Workout not found'
+        });
+      }
+
+  
+      const updatedWorkout = await this.workout.update({
+        where: { id: workoutId },
+        data: {
+          score, 
+          totalRatings,
+          updatedAt: new Date()
+        },
+        select: {
+          id: true,
+          name: true,
+          score: true,
+          totalRatings: true,
+          updatedAt: true
+        }
+      });
+      console.log({updatedWorkout}) 
+  
+      return updatedWorkout;
+  
+    } catch (error) {
+      if (error instanceof RpcException) {
+        throw error;
+      }
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error'
       });
     }
   }

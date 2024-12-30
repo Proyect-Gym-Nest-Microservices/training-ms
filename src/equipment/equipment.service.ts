@@ -4,10 +4,11 @@ import { UpdateEquipmentDto } from './dto/update-equipment.dto';
 import { PrismaClient } from '@prisma/client';
 import { RpcException } from '@nestjs/microservices';
 import { PaginationDto } from 'src/common';
+import { RateDto } from 'src/common/dto/rate.dto';
 
 @Injectable()
 export class EquipmentService extends PrismaClient implements OnModuleInit {
-  
+
   private readonly logger = new Logger('Equipment-Service');
 
   async onModuleInit() {
@@ -74,7 +75,9 @@ export class EquipmentService extends PrismaClient implements OnModuleInit {
           mediaUrl: true,
           description: true,
           category: true,
-          status: true
+          status: true,
+          score: true,
+          totalRatings:true
         }
       });
 
@@ -129,6 +132,66 @@ export class EquipmentService extends PrismaClient implements OnModuleInit {
     }
   }
 
+  async rateEquipment(rateDto: RateDto) {
+    const { score, totalRatings, targetId:equipmentId } = rateDto;
+
+    try {
+      if (score < 0 || score > 5) {
+        throw new RpcException({
+          status: HttpStatus.BAD_REQUEST,
+          message: 'Rating must be between 0 and 5'
+        });
+      }
+
+      if (totalRatings < 0) {
+        throw new RpcException({
+          status: HttpStatus.BAD_REQUEST,
+          message: 'Total ratings cannot be negative'
+        });
+      }
+
+      const equipment = await this.equipment.findUnique({
+        where: {id: equipmentId,isDeleted: false},
+        select: {id: true,score: true,totalRatings: true}
+      });
+
+      if (!equipment) {
+        throw new RpcException({
+          status: HttpStatus.NOT_FOUND,
+          message: 'Equipment not found'
+        });
+      }
+
+
+      const updatedEquipment = await this.equipment.update({
+        where: { id: equipmentId },
+        data: {
+          score,
+          totalRatings,
+          updatedAt: new Date()
+        },
+        select: {
+          id: true,
+          name: true,
+          score: true,
+          totalRatings: true,
+          updatedAt: true
+
+        }
+      });
+
+      return updatedEquipment;
+    } catch (error) {
+      if (error instanceof RpcException) {
+        throw error;
+      }
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error'
+      });
+    }
+  }
+
   async updateEquipment(id: number, updateEquipmentDto: UpdateEquipmentDto) {
     try {
       const existingEquipment = await this.findEquipmentById(id);
@@ -169,7 +232,7 @@ export class EquipmentService extends PrismaClient implements OnModuleInit {
           name: `${equipment.name}_deleted_${equipment.id}`
         }
       });
-      
+
       return {
         id: deletedEquipment.id,
         message: 'Equipment deleted successfully'
@@ -197,10 +260,10 @@ export class EquipmentService extends PrismaClient implements OnModuleInit {
         }
       },
       select: {
-        id: true 
+        id: true
       }
     });
-  
+
     if (exercises.length > 0) {
       throw new RpcException({
         status: HttpStatus.CONFLICT,

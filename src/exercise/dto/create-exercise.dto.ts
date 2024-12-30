@@ -1,4 +1,4 @@
-import { ArrayMinSize, IsArray, IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ArrayMinSize, IsArray, IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 import { Difficulty, Category } from '@prisma/client';
 import { DifficultiesList } from '../enums/difficulties.enu';
 import { CategoriesList } from '../enums/categories.enum';
