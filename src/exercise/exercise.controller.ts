@@ -39,4 +39,9 @@ export class ExerciseController {
   removeExercise(@Payload('id') id: number) {
     return this.exerciseService.removeExercise(id);
   }
+
+  //@MessagePattern('calculate.stats.exercise')
+  //calculateExerciseStatistics(@Payload('id') id:number) {
+  //  return this.exerciseService.calculateExerciseStatistics(id);
+  //}
 }

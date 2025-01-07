@@ -18,7 +18,7 @@ model TrainingPlan {
   name         String     @unique
   level        Difficulty
   score        Float?     @default(0)
-  totalRatings Int?        @default(0)
+  totalRatings Int?       @default(0)
   description  String?
   startDate    DateTime
   endDate      DateTime?
@@ -36,7 +36,7 @@ model Workout {
   frequency          Int
   duration           Int
   score              Float?              @default(0)
-  totalRatings       Int?                 @default(0)
+  totalRatings       Int?                @default(0)
   level              Difficulty
   category           Category
   trainingType       String
@@ -72,7 +72,7 @@ model Exercise {
   mediaUrl       String
   name           String
   score          Float?              @default(0)
-  totalRatings   Int?                 @default(0)
+  totalRatings   Int?                @default(0)
   level          Difficulty
   category       Category
   equipments     Equipment[]         @relation("EquipmentInExercise")
@@ -104,7 +104,7 @@ model Equipment {
   mediaUrl     String
   description  String?
   score        Float?            @default(0)
-  totalRatings Int?               @default(0)
+  totalRatings Int?              @default(0)
   category     EquipmentCategory
   exercise     Exercise[]        @relation("EquipmentInExercise")
   isDeleted    Boolean           @default(false)

@@ -12,7 +12,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
   private readonly logger = new Logger('Exercise-Service');
 
   async onModuleInit() {
-    await this.$connect();
+    await this.$connect(); 
     this.logger.log('DataBase connected');
   }
 
@@ -130,7 +130,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
             select: {
               id: true,
               name: true,
-              description: true
+              description: true,
             }
           },
           equipments: {
@@ -163,7 +163,7 @@ export class ExerciseService extends PrismaClient implements OnModuleInit {
   }
 
   async rateExercise(rateDto: RateDto) {
-    const { score, totalRatings, targetId:exerciseId } = rateDto;
+    const { score, totalRatings, targetId: exerciseId } = rateDto;
     try {
       if (score < 0 || score > 5) {
         throw new RpcException({

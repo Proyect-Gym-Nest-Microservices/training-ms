@@ -4,7 +4,6 @@ import { IsNotEmpty, IsNumber, IsPositive, Max, Min } from "class-validator";
 
 export class RateDto {
 
-    @Transform(({ value }) => Number(value), { toClassOnly: true })
     @IsNumber({}, { message: 'Target ID must be a valid number' })
     targetId: number;
 

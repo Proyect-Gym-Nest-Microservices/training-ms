@@ -108,7 +108,9 @@ export class EquipmentService extends PrismaClient implements OnModuleInit {
           mediaUrl: true,
           description: true,
           category: true,
-          status: true
+          status: true,
+          score: true,
+          totalRatings:true
         }
       });
 
