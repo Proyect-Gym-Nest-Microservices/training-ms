@@ -150,6 +150,13 @@ export class TrainingPlanService extends PrismaClient implements OnModuleInit {
         },
       });
 
+      if (!trainingPlans || trainingPlans.length === 0) {
+        throw new RpcException({
+          status: HttpStatus.NOT_FOUND,
+          message: `Training Plan not found for IDs: ${ids.join(', ')}`,
+        });
+      }
+
       const existingIds = trainingPlans.map(plan => plan.id);
       const missingIds = ids.filter(id => !existingIds.includes(id));
 
