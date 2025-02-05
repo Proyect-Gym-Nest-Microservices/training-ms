@@ -3,7 +3,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { EquipmentService } from './equipment.service';
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
-import { PaginationDto } from 'src/common';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { RateDto } from 'src/common/dto/rate.dto';
 
 

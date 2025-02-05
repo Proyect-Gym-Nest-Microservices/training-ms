@@ -1,6 +1,6 @@
 import { Type } from "class-transformer";
 import { ArrayMinSize, IsArray, IsBoolean, IsDate, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
-import { DifficultiesList, Difficulty } from "src/common";
+import { DifficultiesList, Difficulty } from "../../common/enums/difficulties.enum";
 
 export class CreateTrainingPlanDto {
 

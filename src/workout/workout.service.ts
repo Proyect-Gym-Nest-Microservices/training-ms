@@ -4,8 +4,8 @@ import { CreateWorkoutDto } from './dto/create-workout.dto';
 import { UpdateWorkoutDto } from './dto/update-workout.dto';
 import { PrismaClient } from '@prisma/client';
 import { RpcException } from '@nestjs/microservices';
-import { PaginationDto } from 'src/common';
 import { RateDto } from 'src/common/dto/rate.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class WorkoutService extends PrismaClient implements OnModuleInit {

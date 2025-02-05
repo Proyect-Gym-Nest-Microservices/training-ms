@@ -1,11 +1,11 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { WorkoutService } from './workout.service';
 import { CreateWorkoutDto } from './dto/create-workout.dto';
 import { UpdateWorkoutDto } from './dto/update-workout.dto';
-import { PaginationDto } from 'src/common';
 import { FindWorkoutByIdsDto } from './dto/workout-by-ids.dto';
 import { RateDto } from 'src/common/dto/rate.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
+import {WorkoutService} from './workout.service'
 
 @Controller()
 export class WorkoutController {

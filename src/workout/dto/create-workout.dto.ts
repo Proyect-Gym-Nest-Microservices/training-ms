@@ -1,6 +1,7 @@
 import { Type } from "class-transformer";
 import { ArrayMinSize, IsArray, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from "class-validator";
-import { CategoriesList, Category, DifficultiesList, Difficulty } from "src/common";
+import { CategoriesList, Category } from "../../common/enums/categories.enum";
+import {  DifficultiesList, Difficulty } from "../../common/enums/difficulties.enum";
 import { CreateExerciseInWorkoutDto } from "./exercise-in-workout.dto";
 
 export class CreateWorkoutDto {

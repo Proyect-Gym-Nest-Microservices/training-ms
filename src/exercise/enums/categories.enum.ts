@@ -1,4 +1,3 @@
-//import { Category } from "@prisma/client";
 
 export enum Category {
     CARDIO = 'CARDIO',
